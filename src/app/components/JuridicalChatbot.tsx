@@ -14,6 +14,7 @@ const JuridicalChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
+  const [isBotTyping, setIsBotTyping] = useState(false);
   const [userInfo, setUserInfo] = useState({
     nome: '',
     email: '',
@@ -52,19 +53,31 @@ const JuridicalChatbot = () => {
     }
   ];
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  };
+
+  useEffect(() => {
+    // A small delay allows the DOM to update before we scroll
+    setTimeout(scrollToBottom, 50);
+  }, [messages, isBotTyping]);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      addBotMessage(steps[0].question);
+      setIsBotTyping(true);
+      setTimeout(() => {
+        addBotMessage(steps[0].question);
+        setIsBotTyping(false);
+      }, 800);
     }
-    // Foca no input quando o chat abre
+    // Focus on input when chat opens and scroll
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 300); // Delay para aguardar a transição
+      setTimeout(() => {
+        inputRef.current?.focus();
+        scrollToBottom();
+      }, 300); // Delay to wait for transition
     }
   }, [isOpen]);
 
@@ -89,7 +102,7 @@ const JuridicalChatbot = () => {
   };
 
   const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isBotTyping) return;
 
     const userResponse = inputValue.trim();
     addUserMessage(userResponse);
@@ -103,23 +116,26 @@ const JuridicalChatbot = () => {
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
     setUserInfo(updatedInfo);
 
+    setIsBotTyping(true);
+
     // Ir para próxima pergunta ou finalizar
     setTimeout(() => {
       if (currentStep < steps.length - 1) {
         setCurrentStep(currentStep + 1);
         addBotMessage(steps[currentStep + 1].question);
       } else {
-        finalizarTriagem(updatedInfo);
+        // Final message is also a "bot typing" moment
+        finalizarTriagem(updatedInfo); 
       }
+      setIsBotTyping(false);
       inputRef.current?.focus();
-    }, 500);
+    }, 1200); // Increased delay to feel more natural
   };
 
   const finalizarTriagem = (info: typeof userInfo) => {
     addBotMessage(
       `Obrigado, ${info.nome}! 🎉\n\nRecebemos suas informações:\n\n✓ Email: ${info.email}\n✓ Telefone: ${info.telefone}\n✓ Área: ${info.area}\n\nCom base no seu caso, nossos especialistas entrarão em contato em breve para uma avaliação gratuita.\n\nEm caso de dúvidas, ligue: (11) 99999-9999`
     );
-
     // Enviar dados para servidor (você implementa a rota)
     sendDataToServer(info);
   };
@@ -167,7 +183,7 @@ const JuridicalChatbot = () => {
             </div>
             <button 
               onClick={() => setIsOpen(false)} 
-              className="md:hidden p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+              className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
               aria-label="Fechar chat"
             >
               <X className="w-6 h-6 text-white"/>
@@ -193,6 +209,17 @@ const JuridicalChatbot = () => {
               </div>
             </div>
           ))}
+          {isBotTyping && (
+            <div className="flex justify-start">
+              <div className="max-w-xs px-4 py-2 rounded-lg bg-[#e8f0f7] text-[#1a1f2e] rounded-bl-none">
+                <div className="flex items-center justify-center gap-2 p-1">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Input */}
@@ -203,16 +230,17 @@ const JuridicalChatbot = () => {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             ref={inputRef}
+            onFocus={() => setTimeout(scrollToBottom, 250)} // Scroll into view when keyboard appears
             placeholder="Digite sua resposta..."
             className="flex-1 px-3 py-2 border-2 border-[#e8f0f7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a574] text-base text-[#1a1f2e] font-medium placeholder:text-gray-500 bg-white"
-            disabled={currentStep >= steps.length}
+            disabled={currentStep >= steps.length || isBotTyping}
           />
           <button
             onClick={(e) => {
               e.preventDefault(); // Evita que o botão roube o foco
               handleSendMessage();
             }}
-            disabled={currentStep >= steps.length}
+            disabled={currentStep >= steps.length || isBotTyping}
             className="bg-[#2d5a8c] hover:bg-[#1a3a5c] text-white px-4 py-2 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             <Send className="w-4 h-4" />
