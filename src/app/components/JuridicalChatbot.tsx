@@ -81,6 +81,20 @@ const JuridicalChatbot = () => {
     }
   }, [isOpen]);
 
+  // Monitorar redimensionamento da janela (teclado mobile abrindo/fechando)
+  useEffect(() => {
+    const handleResize = () => {
+      if (isOpen) {
+        setTimeout(scrollToBottom, 100);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isOpen]);
+
   const addBotMessage = (text: string) => {
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -108,6 +122,10 @@ const JuridicalChatbot = () => {
     addUserMessage(userResponse);
     setInputValue('');
 
+    // Manter foco e rolar imediatamente
+    inputRef.current?.focus();
+    setTimeout(scrollToBottom, 50);
+
     // Validar e armazenar resposta
     const currentStepData = steps[currentStep];
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
@@ -127,6 +145,7 @@ const JuridicalChatbot = () => {
       setIsBotTyping(false);
       // Garantir que o scroll vá para o final após a resposta do bot
       setTimeout(scrollToBottom, 100);
+      inputRef.current?.focus();
       
     }, 1200); // Increased delay to feel more natural
   };
@@ -167,7 +186,7 @@ const JuridicalChatbot = () => {
 
       {/* Janela do Chat */}
       <motion.div
-        className="fixed bottom-0 right-0 w-full h-full md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7]"
+        className="fixed bottom-0 right-0 w-full h-[100dvh] md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7]"
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={isOpen ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3 }}
@@ -236,8 +255,9 @@ const JuridicalChatbot = () => {
             disabled={currentStep >= steps.length}
           />
           <button
+            onMouseDown={(e) => e.preventDefault()} // Impede que o clique roube o foco do input
             onClick={(e) => {
-              e.preventDefault(); // Evita que o botão roube o foco
+              e.preventDefault();
               handleSendMessage();
             }}
             disabled={currentStep >= steps.length || isBotTyping}
