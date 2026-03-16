@@ -82,7 +82,7 @@ export function SpecialistsSection() {
         </div>
 
         {/* Specialists Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {specialists.map((specialist, index) => (
             <motion.div
               key={specialist.name}
@@ -175,7 +175,7 @@ export function SpecialistsSection() {
             <div className="text-left">
               <div className="text-2xl mb-1">Mais de 50 especialistas</div>
               <p className="text-sm text-muted-foreground">
-                Prontos para cuidar da sua saúde
+                Prontos para defender seus direitos
               </p>
             </div>
           </div>

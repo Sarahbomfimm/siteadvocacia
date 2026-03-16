@@ -101,38 +101,6 @@ export function BookingSection() {
               ))}
             </div>
 
-            {/* Emergency Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              whileHover={{ x: 8 }}
-              className="flex items-start gap-4 p-4 rounded-xl hover:bg-secondary/50 transition-all"
-            >
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <MailIcon className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <div className="font-medium mb-1">E-mail</div>
-                <div className="text-sm text-muted-foreground">contato@justicaedireito.com.br</div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              whileHover={{ x: 8 }}
-              className="flex items-start gap-4 p-4 rounded-xl hover:bg-secondary/50 transition-all"
-            >
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <ClockIcon className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <div className="font-medium mb-1">Horário de Atendimento</div>
-                <div className="text-sm text-muted-foreground">Segunda a Sexta: 9h - 18h</div>
-              </div>
-            </motion.div>
           </motion.div>
 
           {/* Right Column - Form */}
@@ -215,7 +183,7 @@ export function BookingSection() {
                       <input
                         type="date"
                         required
-                        className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                       />
                     </div>
                   </motion.div>
@@ -231,7 +199,7 @@ export function BookingSection() {
                       <input
                         type="time"
                         required
-                        className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                       />
                     </div>
                   </motion.div>

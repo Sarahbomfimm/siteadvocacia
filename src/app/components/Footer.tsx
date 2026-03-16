@@ -116,7 +116,7 @@ export function Footer() {
         <div className="pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground text-center md:text-left">
-              © 2026 Vita Medical. Todos os direitos reservados.
+              © 2026 Justiça & Direito. Todos os direitos reservados.
             </p>
             <div className="flex gap-6">
               <motion.a

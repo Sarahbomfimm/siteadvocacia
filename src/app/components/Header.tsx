@@ -1,5 +1,6 @@
-import { Moon, Sun, Calendar, Scale } from "lucide-react";
-import { motion } from "motion/react";
+import { Moon, Sun, Calendar, Scale, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { useState } from "react";
 
 interface HeaderProps {
   isDark: boolean;
@@ -8,6 +9,8 @@ interface HeaderProps {
 }
 
 export function Header({ isDark, toggleTheme, onBookClick }: HeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <motion.header
       initial={{ y: -100, opacity: 0 }}
@@ -78,9 +81,43 @@ export function Header({ isDark, toggleTheme, onBookClick }: HeaderProps) {
               <span className="hidden sm:inline">Consulta Jurídica</span>
               <span className="sm:hidden">Agendar</span>
             </motion.button>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-secondary transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Menu"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Dropdown */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.nav
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="md:hidden border-t border-border bg-background overflow-hidden"
+          >
+            <div className="flex flex-col p-6 space-y-4">
+              {["Início", "Sobre", "Serviços", "Equipe", "Depoimentos"].map((item) => (
+                <a
+                  key={item}
+                  href={`#${item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}
+                  className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors block py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item}
+                </a>
+              ))}
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }
