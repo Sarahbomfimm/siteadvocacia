@@ -109,15 +109,11 @@ const JuridicalChatbot = () => {
     setInputValue('');
 
     // Validar e armazenar resposta
-    // Forçar foco imediato para tentar manter teclado aberto em mobile
-    inputRef.current?.focus();
-    
     const currentStepData = steps[currentStep];
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
     setUserInfo(updatedInfo);
 
     setIsBotTyping(true);
-
     // Ir para próxima pergunta ou finalizar
     setTimeout(() => {
       if (currentStep < steps.length - 1) {
@@ -127,8 +123,11 @@ const JuridicalChatbot = () => {
         // Final message is also a "bot typing" moment
         finalizarTriagem(updatedInfo); 
       }
+      
       setIsBotTyping(false);
-      inputRef.current?.focus();
+      // Garantir que o scroll vá para o final após a resposta do bot
+      setTimeout(scrollToBottom, 100);
+      
     }, 1200); // Increased delay to feel more natural
   };
 
@@ -155,7 +154,7 @@ const JuridicalChatbot = () => {
       {/* Botão Flutuante */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-[#2d5a8c] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#0f1f35] text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 z-40 flex items-center justify-center"
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-[#2d5a8c] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#0f1f35] text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 z-[60] flex items-center justify-center"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, y: 20 }}
@@ -168,7 +167,7 @@ const JuridicalChatbot = () => {
 
       {/* Janela do Chat */}
       <motion.div
-        className="fixed bottom-0 right-0 w-full h-full md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-40 overflow-hidden border-t md:border border-[#e8f0f7]"
+        className="fixed bottom-0 right-0 w-full h-full md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7]"
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={isOpen ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3 }}
@@ -233,7 +232,8 @@ const JuridicalChatbot = () => {
             onFocus={() => setTimeout(scrollToBottom, 250)} // Scroll into view when keyboard appears
             placeholder="Digite sua resposta..."
             className="flex-1 px-3 py-2 border-2 border-[#e8f0f7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a574] text-base text-[#1a1f2e] font-medium placeholder:text-gray-500 bg-white"
-            disabled={currentStep >= steps.length || isBotTyping}
+            // Não desabilitar durante isBotTyping para manter o teclado aberto no mobile
+            disabled={currentStep >= steps.length}
           />
           <button
             onClick={(e) => {
