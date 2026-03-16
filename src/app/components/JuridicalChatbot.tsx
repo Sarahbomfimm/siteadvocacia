@@ -82,16 +82,27 @@ const JuridicalChatbot = () => {
   }, [isOpen]);
 
   // Monitorar redimensionamento da janela (teclado mobile abrindo/fechando)
+  // Usamos a API visualViewport para uma detecção mais precisa no mobile.
   useEffect(() => {
+    const visualViewport = window.visualViewport;
+
     const handleResize = () => {
-      if (isOpen) {
-        setTimeout(scrollToBottom, 100);
-      }
+      // Um pequeno delay para garantir que o layout se ajustou antes de rolar
+      setTimeout(scrollToBottom, 100);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
+    if (visualViewport) {
+      // A API visualViewport é a forma moderna e correta de lidar com o teclado virtual.
+      visualViewport.addEventListener('resize', handleResize);
+      return () => {
+        visualViewport.removeEventListener('resize', handleResize);
+      };
+    } else {
+      // Fallback para navegadores mais antigos que não suportam visualViewport.
+      window.addEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
     };
   }, [isOpen]);
 
@@ -122,10 +133,8 @@ const JuridicalChatbot = () => {
     addUserMessage(userResponse);
     setInputValue('');
 
-    // Manter foco e rolar imediatamente
-    inputRef.current?.focus();
-    setTimeout(scrollToBottom, 50);
-
+    // Focar no input no próximo ciclo de eventos para garantir que o teclado não feche.
+    setTimeout(() => inputRef.current?.focus(), 0);
     // Validar e armazenar resposta
     const currentStepData = steps[currentStep];
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
@@ -143,10 +152,6 @@ const JuridicalChatbot = () => {
       }
       
       setIsBotTyping(false);
-      // Garantir que o scroll vá para o final após a resposta do bot
-      setTimeout(scrollToBottom, 100);
-      inputRef.current?.focus();
-      
     }, 1200); // Increased delay to feel more natural
   };
 
