@@ -23,6 +23,7 @@ const JuridicalChatbot = () => {
     descricao: ''
   });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const steps = [
@@ -61,7 +62,8 @@ const JuridicalChatbot = () => {
 
   useEffect(() => {
     // A small delay allows the DOM to update before we scroll
-    setTimeout(scrollToBottom, 50);
+    // Só rola para o final se for uma mensagem NOVA ou o bot digitando
+    setTimeout(scrollToBottom, 100);
   }, [messages, isBotTyping]);
 
   useEffect(() => {
@@ -72,38 +74,33 @@ const JuridicalChatbot = () => {
         setIsBotTyping(false);
       }, 800);
     }
-    // Focus on input when chat opens and scroll
+    // Foca no input quando abre, mas NÃO força scroll desnecessário
     if (isOpen) {
       setTimeout(() => {
         inputRef.current?.focus();
-        scrollToBottom();
       }, 300); // Delay to wait for transition
     }
   }, [isOpen]);
 
   // Monitorar redimensionamento da janela (teclado mobile abrindo/fechando)
-  // Usamos a API visualViewport para uma detecção mais precisa no mobile.
+  // Ajusta a altura do container para caber na tela visível (acima do teclado)
   useEffect(() => {
     const visualViewport = window.visualViewport;
 
     const handleResize = () => {
-      // Um pequeno delay para garantir que o layout se ajustou antes de rolar
-      setTimeout(scrollToBottom, 100);
+      if (chatContainerRef.current && visualViewport) {
+        // Ajusta a altura explicitamente para a altura visível da viewport
+        chatContainerRef.current.style.height = `${visualViewport.height}px`;
+      }
     };
 
     if (visualViewport) {
-      // A API visualViewport é a forma moderna e correta de lidar com o teclado virtual.
       visualViewport.addEventListener('resize', handleResize);
+      handleResize(); // Ajusta inicialmente
       return () => {
         visualViewport.removeEventListener('resize', handleResize);
       };
-    } else {
-      // Fallback para navegadores mais antigos que não suportam visualViewport.
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
-    };
+    }
   }, [isOpen]);
 
   const addBotMessage = (text: string) => {
@@ -134,7 +131,7 @@ const JuridicalChatbot = () => {
     setInputValue('');
 
     // Focar no input no próximo ciclo de eventos para garantir que o teclado não feche.
-    setTimeout(() => inputRef.current?.focus(), 0);
+    setTimeout(() => inputRef.current?.focus(), 10);
     // Validar e armazenar resposta
     const currentStepData = steps[currentStep];
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
@@ -191,11 +188,12 @@ const JuridicalChatbot = () => {
 
       {/* Janela do Chat */}
       <motion.div
-        className="fixed bottom-0 right-0 w-full h-[100dvh] md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7]"
+        ref={chatContainerRef}
+        className="fixed bottom-0 right-0 w-full md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7]"
+        style={{ height: '100dvh' }} // Fallback inicial
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={isOpen ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3 }}
-        style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-[#2d5a8c] to-[#1a3a5c] text-white p-4">
@@ -253,7 +251,7 @@ const JuridicalChatbot = () => {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             ref={inputRef}
-            onFocus={() => setTimeout(scrollToBottom, 250)} // Scroll into view when keyboard appears
+            // Removido onFocus com scrollToBottom para evitar pulos de tela
             placeholder="Digite sua resposta..."
             className="flex-1 px-3 py-2 border-2 border-[#e8f0f7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a574] text-base text-[#1a1f2e] font-medium placeholder:text-gray-500 bg-white"
             // Não desabilitar durante isBotTyping para manter o teclado aberto no mobile
