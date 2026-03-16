@@ -98,6 +98,9 @@ const JuridicalChatbot = () => {
     setInputValue('');
 
     // Validar e armazenar resposta
+    // Forçar foco imediato para tentar manter teclado aberto em mobile
+    inputRef.current?.focus();
+    
     const currentStepData = steps[currentStep];
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
     setUserInfo(updatedInfo);
@@ -164,7 +167,13 @@ const JuridicalChatbot = () => {
               <h3 className="font-bold text-lg">Triagem Jurídica</h3>
               <p className="text-sm text-blue-100">Assistente de atendimento 24/7</p>
             </div>
-            <button onClick={() => setIsOpen(false)} className="md:hidden p-1"><X className="w-5 h-5"/></button>
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="md:hidden p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+              aria-label="Fechar chat"
+            >
+              <X className="w-6 h-6 text-white"/>
+            </button>
           </div>
         </div>
 
@@ -202,7 +211,10 @@ const JuridicalChatbot = () => {
             disabled={currentStep >= steps.length}
           />
           <button
-            onClick={handleSendMessage}
+            onClick={(e) => {
+              e.preventDefault(); // Evita que o botão roube o foco
+              handleSendMessage();
+            }}
             disabled={currentStep >= steps.length}
             className="bg-[#2d5a8c] hover:bg-[#1a3a5c] text-white px-4 py-2 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >

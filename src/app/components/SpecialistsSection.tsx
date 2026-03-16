@@ -134,13 +134,14 @@ export function SpecialistsSection() {
                     </div>
                   </div>
 
-                  <motion.button
+                  <motion.a
+                    href="#agendamento"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full py-3 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary rounded-lg transition-colors"
+                    className="w-full py-3 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary rounded-lg transition-colors flex items-center justify-center"
                   >
                     Agendar Consulta
-                  </motion.button>
+                  </motion.a>
                 </div>
               </div>
             </motion.div>
