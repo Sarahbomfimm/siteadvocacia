@@ -189,8 +189,9 @@ const JuridicalChatbot = () => {
       {/* Janela do Chat */}
       <motion.div
         ref={chatContainerRef}
-        className="fixed bottom-0 right-0 w-full md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7]"
-        style={{ height: '100dvh' }} // Fallback inicial
+        className={`fixed bottom-0 right-0 w-full h-[100dvh] md:w-96 md:h-auto md:max-h-[70vh] md:bottom-24 md:right-6 bg-white rounded-none md:rounded-lg shadow-2xl flex flex-col z-[60] overflow-hidden border-t md:border border-[#e8f0f7] ${
+          isOpen ? 'pointer-events-auto' : 'pointer-events-none'
+        }`}
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={isOpen ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3 }}
