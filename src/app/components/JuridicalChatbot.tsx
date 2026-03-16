@@ -21,7 +21,7 @@ const JuridicalChatbot = () => {
     area: '',
     descricao: ''
   });
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const steps = [
@@ -53,7 +53,9 @@ const JuridicalChatbot = () => {
   ];
 
   useEffect(() => {
-    scrollToBottom();
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -65,10 +67,6 @@ const JuridicalChatbot = () => {
       setTimeout(() => inputRef.current?.focus(), 300); // Delay para aguardar a transição
     }
   }, [isOpen]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const addBotMessage = (text: string) => {
     const newMessage: Message = {
@@ -178,7 +176,7 @@ const JuridicalChatbot = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f5f6f9]">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f5f6f9]">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -195,7 +193,6 @@ const JuridicalChatbot = () => {
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
