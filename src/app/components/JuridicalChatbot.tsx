@@ -9,6 +9,30 @@ interface Message {
   timestamp: Date;
 }
 
+const validateResponse = (response: string, step: any): boolean => {
+  const value = response.toLowerCase();
+  switch (step.key) {
+    case 'email':
+      // Simple regex to check for a valid email format
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    case 'telefone':
+      // Checks for at least 8 digits, allowing for common phone characters
+      return (value.match(/\d/g) || []).length >= 8;
+    case 'area':
+      // Checks if the response contains any of the expected keywords
+      const keywords = ['civil', 'trabalho', 'penal', 'família', 'imobiliário', 'tributário', 'outra'];
+      return keywords.some(keyword => value.includes(keyword));
+    case 'nome':
+      // Name should have at least 3 characters and contain only letters/spaces.
+      return value.length > 2 && /^[a-zA-Z\sÀ-ú]+$/.test(value);
+    case 'descricao':
+      // Description just needs to not be empty
+      return value.length > 0;
+    default:
+      return true; // Default to true if no specific validation
+  }
+};
+
 const JuridicalChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -43,9 +67,18 @@ const JuridicalChatbot = () => {
       type: 'tel'
     },
     {
-      question: "Qual área do direito você precisa? Escolha uma:\n• Direito Civil\n• Direito do Trabalho\n• Direito Penal\n• Direito de Família\n• Direito Imobiliário\n• Direito Tributário\n• Outra",
+      question: "Qual área do direito você precisa? Selecione uma das opções abaixo:",
       key: 'area',
-      type: 'select'
+      type: 'select',
+      options: [
+        "Direito Civil",
+        "Direito do Trabalho",
+        "Direito Penal",
+        "Direito de Família",
+        "Direito Imobiliário",
+        "Direito Tributário",
+        "Outra"
+      ]
     },
     {
       question: "Pode descrever brevemente qual é o seu caso?",
@@ -123,51 +156,70 @@ const JuridicalChatbot = () => {
     setMessages(prev => [...prev, newMessage]);
   };
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim() || isBotTyping) return;
+  const handleSendMessage = (text?: string) => {
+    const userResponse = text || inputValue.trim();
+    if (!userResponse || isBotTyping) return;
 
-    const userResponse = inputValue.trim();
     addUserMessage(userResponse);
     setInputValue('');
 
     // Focar no input no próximo ciclo de eventos para garantir que o teclado não feche.
     setTimeout(() => inputRef.current?.focus(), 10);
-    // Validar e armazenar resposta
+    
     const currentStepData = steps[currentStep];
+
+    // Valida a resposta do usuário
+    if (!validateResponse(userResponse, currentStepData)) {
+      setIsBotTyping(true);
+      setTimeout(() => {
+        addBotMessage(`Desculpe, não entendi sua resposta. Vamos tentar novamente.\n\n${currentStepData.question}`);
+        setIsBotTyping(false);
+      }, 1000);
+      return; // Interrompe o fluxo se a resposta for inválida
+    }
+
+    // Armazena a resposta válida
     const updatedInfo = { ...userInfo, [currentStepData.key]: userResponse };
     setUserInfo(updatedInfo);
 
     setIsBotTyping(true);
     // Ir para próxima pergunta ou finalizar
     setTimeout(() => {
-      if (currentStep < steps.length - 1) {
-        setCurrentStep(currentStep + 1);
-        addBotMessage(steps[currentStep + 1].question);
+      const nextStep = currentStep + 1;
+      if (nextStep < steps.length) {
+        setCurrentStep(nextStep);
+        addBotMessage(steps[nextStep].question);
       } else {
-        // Final message is also a "bot typing" moment
-        finalizarTriagem(updatedInfo); 
+        // Finaliza a triagem e avança o passo para desabilitar o input
+        finalizarTriagem(updatedInfo);
+        setCurrentStep(nextStep);
       }
       
       setIsBotTyping(false);
-    }, 1200); // Increased delay to feel more natural
+    }, 1200);
   };
 
   const finalizarTriagem = (info: typeof userInfo) => {
     addBotMessage(
-      `Obrigado, ${info.nome}! 🎉\n\nRecebemos suas informações:\n\n✓ Email: ${info.email}\n✓ Telefone: ${info.telefone}\n✓ Área: ${info.area}\n\nCom base no seu caso, nossos especialistas entrarão em contato em breve para uma avaliação gratuita.\n\nEm caso de dúvidas, ligue: (11) 99999-9999`
+      `Obrigado, ${info.nome}! 🎉\n\nSuas informações foram registradas com sucesso. Nossa equipe analisará seu caso e entrará em contato através do email informado (${info.email}) ou telefone o mais breve possível.`
     );
-    // Enviar dados para servidor (você implementa a rota)
-    sendDataToServer(info);
+    // Envia os dados por email (simulação/API)
+    sendDataToEmail(info);
   };
 
-  const sendDataToServer = async (data: typeof userInfo) => {
-    try {
-      // Aqui você conectaria com seu backend
-      console.log('Dados do chatbot:', data);
-      // fetch('/api/triagem-juridica', { method: 'POST', body: JSON.stringify(data) })
-    } catch (error) {
-      console.error('Erro ao enviar dados:', error);
-    }
+  const sendDataToEmail = async (data: typeof userInfo) => {
+    // Para enviar email sem abrir aba, é necessário um serviço de backend (API).
+    // Abaixo está a simulação do envio para o email solicitado: sarahbomfimm24@gmail.com
+    
+    console.log("Enviando dados para: sarahbomfimm24@gmail.com", data);
+    
+    // Exemplo de integração (ex: EmailJS, Formspree, ou API própria):
+    // await fetch('/api/send-email', { method: 'POST', body: JSON.stringify(data) });
+    
+    // Como este é um componente frontend sem backend configurado, simulamos o sucesso:
+    setTimeout(() => {
+      console.log("Email enviado com sucesso (Simulação)!");
+    }, 1000);
   };
 
   return (
@@ -246,6 +298,21 @@ const JuridicalChatbot = () => {
 
         {/* Input */}
         <div className="border-t border-[#e8f0f7] p-3 bg-white flex gap-2">
+          {steps[currentStep] && steps[currentStep].type === 'select' && (steps[currentStep] as any).options ? (
+            <div className="flex flex-wrap gap-2 w-full">
+              {(steps[currentStep] as any).options.map((option: string) => (
+                <button
+                  key={option}
+                  onClick={() => handleSendMessage(option)}
+                  disabled={isBotTyping}
+                  className="flex-1 min-w-[45%] px-3 py-2 bg-white border border-[#2d5a8c] text-[#2d5a8c] rounded-lg hover:bg-[#2d5a8c] hover:text-white transition-colors text-sm font-medium"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          ) : (
+          <>
           <input
             type="text"
             value={inputValue}
@@ -269,6 +336,8 @@ const JuridicalChatbot = () => {
           >
             <Send className="w-4 h-4" />
           </button>
+          </>
+          )}
         </div>
       </motion.div>
     </>
