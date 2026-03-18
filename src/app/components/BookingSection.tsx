@@ -1,5 +1,5 @@
-import { motion, useInView } from "motion/react";
-import { useRef, useState } from "react";
+import { motion, useInView, AnimatePresence } from "motion/react";
+import { useRef, useState, useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -12,20 +12,69 @@ import {
   Phone as PhoneIcon,
   Mail as MailIcon,
   Clock as ClockIcon,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 export function BookingSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{ show: boolean; type: 'success' | 'error'; title: string; message: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification?.show) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      alert("Solicitação enviada com sucesso! Em breve um de nossos advogados entrará em contato.");
+
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      // Usando FormSubmit.co para envio sem backend/senha
+      const response = await fetch("https://formsubmit.co/ajax/yourpage.business.tech@gmail.com", {
+        method: "POST",
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          _subject: "📅 Nova Solicitação de Agendamento",
+          _template: "table", // Formata o email bonitinho em tabela
+          ...data
+        }),
+      });
+
+      if (response.ok) {
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Solicitação Enviada',
+          message: 'Recebemos seu pedido. Em breve um de nossos advogados entrará em contato.'
+        });
+        (e.target as HTMLFormElement).reset();
+      } else {
+        throw new Error('Falha no envio');
+      }
+    } catch (error) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Erro no Envio',
+        message: 'Não foi possível enviar sua solicitação. Verifique sua conexão e tente novamente.'
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -127,6 +176,7 @@ export function BookingSection() {
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="text"
+                      name="name"
                       required
                       className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       placeholder="Seu nome completo"
@@ -145,6 +195,7 @@ export function BookingSection() {
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="email"
+                      name="email"
                       required
                       className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       placeholder="seu@email.com"
@@ -163,6 +214,7 @@ export function BookingSection() {
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <input
                       type="tel"
+                      name="phone"
                       required
                       className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       placeholder="(00) 00000-0000"
@@ -182,6 +234,7 @@ export function BookingSection() {
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <input
                         type="date"
+                        name="date"
                         required
                         className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                       />
@@ -198,6 +251,7 @@ export function BookingSection() {
                       <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <input
                         type="time"
+                        name="time"
                         required
                         className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                       />
@@ -216,6 +270,7 @@ export function BookingSection() {
                     <FileText className="absolute left-4 top-4 w-5 h-5 text-muted-foreground" />
                     <textarea
                       rows={4}
+                      name="message"
                       className="w-full pl-12 pr-4 py-3.5 bg-secondary/50 border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
                       placeholder="Conte-nos o motivo da consulta..."
                     />
@@ -254,6 +309,67 @@ export function BookingSection() {
           </motion.div>
         </div>
       </div>
+
+      {/* Notification Popup (Centralizado e Chamativo) */}
+      <AnimatePresence>
+        {notification?.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop escuro com blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setNotification(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            
+            {/* Card do Popup */}
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-card border border-border p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center overflow-hidden"
+            >
+              {/* Efeito de brilho no fundo */}
+              <div className={`absolute top-0 left-0 w-full h-24 bg-gradient-to-b ${
+                 notification.type === 'success' ? 'from-green-500/10' : 'from-red-500/10'
+              } to-transparent pointer-events-none`} />
+
+              <div className="relative z-10 flex flex-col items-center">
+                <motion.div 
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ${
+                    notification.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}
+                >
+                  {notification.type === 'success' ? (
+                    <CheckCircle className="w-12 h-12" />
+                  ) : (
+                    <XCircle className="w-12 h-12" />
+                  )}
+                </motion.div>
+                
+                <h3 className="text-2xl font-bold mb-3">{notification.title}</h3>
+                <p className="text-muted-foreground mb-8 leading-relaxed">
+                  {notification.message}
+                </p>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setNotification(null)}
+                  className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                  Entendido
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

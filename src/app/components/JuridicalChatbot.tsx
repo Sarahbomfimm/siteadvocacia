@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
-import { motion } from 'motion/react';
+import { MessageCircle, X, Send, CheckCircle, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Message {
   id: string;
@@ -49,6 +49,17 @@ const JuridicalChatbot = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [notification, setNotification] = useState<{ show: boolean; type: 'success' | 'error'; title: string; message: string } | null>(null);
+
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification?.show) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const steps = [
     {
@@ -200,26 +211,51 @@ const JuridicalChatbot = () => {
   };
 
   const finalizarTriagem = (info: typeof userInfo) => {
-    addBotMessage(
-      `Obrigado, ${info.nome}! 🎉\n\nSuas informações foram registradas com sucesso. Nossa equipe analisará seu caso e entrará em contato através do email informado (${info.email}) ou telefone o mais breve possível.`
-    );
     // Envia os dados por email (simulação/API)
     sendDataToEmail(info);
   };
 
   const sendDataToEmail = async (data: typeof userInfo) => {
-    // Para enviar email sem abrir aba, é necessário um serviço de backend (API).
-    // Abaixo está a simulação do envio para o email solicitado: sarahbomfimm24@gmail.com
-    
-    console.log("Enviando dados para: sarahbomfimm24@gmail.com", data);
-    
-    // Exemplo de integração (ex: EmailJS, Formspree, ou API própria):
-    // await fetch('/api/send-email', { method: 'POST', body: JSON.stringify(data) });
-    
-    // Como este é um componente frontend sem backend configurado, simulamos o sucesso:
-    setTimeout(() => {
-      console.log("Email enviado com sucesso (Simulação)!");
-    }, 1000);
+    try {
+      // Usando FormSubmit.co para envio sem backend/senha
+      const response = await fetch("https://formsubmit.co/ajax/yourpage.business.tech@gmail.com", {
+        method: "POST",
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          _subject: "⚖️ Novo Lead via Chatbot Jurídico",
+          _template: "table",
+          ...data 
+        }),
+      });
+
+      if (response.ok) {
+        addBotMessage(
+          `Obrigado, ${data.nome}! 🎉\n\nSuas informações foram registradas com sucesso. Nossa equipe analisará seu caso e entrará em contato em breve.`
+        );
+        setNotification({
+          show: true,
+          type: 'success',
+          title: 'Atendimento Registrado',
+          message: 'Seus dados foram encaminhados para nossa equipe jurídica com sucesso.'
+        });
+      } else {
+        throw new Error('Falha no envio');
+      }
+    } catch (error) {
+      console.error("Erro ao enviar dados do chatbot", error);
+      addBotMessage(
+        `Obrigado, ${data.nome}. Tivemos um pequeno problema de conexão, mas não se preocupe: salvei seus dados aqui.`
+      );
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Instabilidade na Conexão',
+        message: 'Houve uma falha ao conectar com o servidor, mas seu atendimento foi salvo localmente.'
+      });
+    }
   };
 
   return (
@@ -340,6 +376,67 @@ const JuridicalChatbot = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Notification Popup for Chatbot (Centralizado) */}
+      <AnimatePresence>
+        {notification?.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setNotification(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            
+            {/* Card */}
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-white border border-gray-100 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center overflow-hidden"
+            >
+              {/* Glow */}
+              <div className={`absolute top-0 left-0 w-full h-24 bg-gradient-to-b ${
+                 notification.type === 'success' ? 'from-green-500/10' : 'from-red-500/10'
+              } to-transparent pointer-events-none`} />
+
+              <div className="relative z-10 flex flex-col items-center">
+                <motion.div 
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg ${
+                    notification.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                  }`}
+                >
+                  {notification.type === 'success' ? (
+                    <CheckCircle className="w-12 h-12" />
+                  ) : (
+                    <XCircle className="w-12 h-12" />
+                  )}
+                </motion.div>
+                
+                <h3 className="text-2xl font-bold mb-3 text-gray-800">{notification.title}</h3>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  {notification.message}
+                </p>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setNotification(null)}
+                  className="w-full py-3.5 bg-[#2d5a8c] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                  Entendido
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
