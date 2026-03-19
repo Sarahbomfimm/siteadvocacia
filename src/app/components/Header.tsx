@@ -24,7 +24,7 @@ export function Header({ isDark, toggleTheme, onBookClick }: HeaderProps) {
           <motion.div
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center gap-3 mb-2"
+            className="flex items-center gap-3 mb-4"
           >
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Scale className="w-6 h-6 text-primary-foreground" />
