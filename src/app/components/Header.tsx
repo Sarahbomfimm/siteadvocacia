@@ -24,12 +24,12 @@ export function Header({ isDark, toggleTheme, onBookClick }: HeaderProps) {
           <motion.div
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center gap-3 mb-4"
+            className="flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Scale className="w-6 h-6 text-primary-foreground" />
             </div>
-            <div>
+            <div className="pt-1">
               <h1 className="text-xl tracking-tight">Justiça & Direito</h1>
               <p className="text-xs text-muted-foreground">Assessoria Jurídica</p>
             </div>
