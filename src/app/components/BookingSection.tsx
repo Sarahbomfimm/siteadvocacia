@@ -1,4 +1,4 @@
-import { motion, useInView, AnimatePresence } from "motion/react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import {
   Calendar,
@@ -61,7 +61,7 @@ export function BookingSection() {
           title: 'Solicitação Enviada',
           message: 'Recebemos seu pedido. Em breve um de nossos advogados entrará em contato.'
         });
-        (e.target as HTMLFormElement).reset();
+        (e.currentTarget as HTMLFormElement).reset();
       } else {
         throw new Error('Falha no envio');
       }
